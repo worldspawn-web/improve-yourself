@@ -45,7 +45,7 @@ def solve_equation():
 def main():
     # Chapter No.1
     print("Остаток от деления:", arithmetic_remainder(2023, 13))
-    print("15% от 800:", percentage_from(800, 15))
+    print("15% от 800:", int(percentage_from(800, 15)))
 
     # Chapter No.2
     print("Упрощенное выражение:", algebra_simplify())
