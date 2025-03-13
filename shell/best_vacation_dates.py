@@ -1,7 +1,7 @@
 import datetime
 
 def get_holidays(calendar_type):
-    
+    # Returns a dictionary with holidays
     if calendar_type == "russian":
         return {
             "New Year": datetime.date(2025, 1, 1),
@@ -36,6 +36,7 @@ def get_holidays(calendar_type):
         raise ValueError("Unknown calendar type")
     
 def generate_dates(year):
+    # Generates all dates in the year
     start_date = datetime.date(year, 1, 1)
     end_date = datetime.date(year, 12, 31)
     delta = datetime.timedelta(days=1)
@@ -46,6 +47,13 @@ def generate_dates(year):
         current_date += delta
     return dates
 
+def is_long_holiday(period_start, period_end, long_holidays):
+    # Checks if the period matches long holidays
+    for holiday_start, holiday_end in long_holidays:
+        if not (period_end < holiday_start or period_start > holiday_end):
+            return True
+    return False
+
 def count_nearby_holidays(period_start, period_end, holidays, proximity_days=3):
     # Counts holidays near proximity days
     holiday_count = 0
@@ -55,27 +63,38 @@ def count_nearby_holidays(period_start, period_end, holidays, proximity_days=3):
     return holiday_count
 
 def find_best_vacations(dates, holidays, min_gap=30):
+    # Looks for the best vacation dates
     best_weeks = []
     best_two_weeks = []
-    
+
+    # Long Holidays
+    long_holidays = [
+        (datetime.date(2025, 1, 1), datetime.date(2025, 1, 8)),  # Happy New Year!
+        # ... add more
+    ]
+
     for i in range(len(dates)):
         # Checking a week
         week_start = dates[i]
         week_end = week_start + datetime.timedelta(days=7)
+        if is_long_holiday(week_start, week_end, long_holidays):
+            continue  # skipping a period which is matching any long vacation
         holiday_count = count_nearby_holidays(week_start, week_end, holidays)
         best_weeks.append((week_start, holiday_count))
 
-        # Checking 2-weeks
+        # Проверяем двухнедельный отрезок
         two_weeks_start = dates[i]
         two_weeks_end = two_weeks_start + datetime.timedelta(days=14)
+        if is_long_holiday(two_weeks_start, two_weeks_end, long_holidays):
+            continue  # Пропускаем периоды, совпадающие с длительными праздниками
         holiday_count = count_nearby_holidays(two_weeks_start, two_weeks_end, holidays)
         best_two_weeks.append((two_weeks_start, holiday_count))
 
-    # Sorting by the amount of holidays
+    # Сортируем по количеству праздников
     best_weeks.sort(key=lambda x: x[1], reverse=True)
     best_two_weeks.sort(key=lambda x: x[1], reverse=True)
 
-    # Filtering by seasons & min gap
+    # Фильтруем по сезонам и минимальному разрыву
     seasons = {
         "winter": (datetime.date(2025, 1, 1), datetime.date(2025, 3, 20)),
         "spring": (datetime.date(2025, 3, 21), datetime.date(2025, 6, 20)),
