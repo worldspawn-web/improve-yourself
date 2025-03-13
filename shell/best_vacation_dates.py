@@ -41,11 +41,18 @@ def generate_dates(year):
     delta = datetime.timedelta(days=1)
     dates = []
     current_date = start_date
-    
     while current_date <= end_date:
         dates.append(current_date)
         current_date += delta
     return dates
+
+def count_nearby_holidays(period_start, period_end, holidays, proximity_days=3):
+    # Counts holidays near proximity days
+    holiday_count = 0
+    for holiday in holidays.values():
+        if period_start - datetime.timedelta(days=proximity_days) <= holiday <= period_end + datetime.timedelta(days=proximity_days):
+            holiday_count += 1
+    return holiday_count
 
 def find_best_vacations(dates, holidays, min_gap=30):
     best_weeks = []
@@ -53,19 +60,21 @@ def find_best_vacations(dates, holidays, min_gap=30):
     
     for i in range(len(dates)):
         # Checking a week
-        week = dates[i:i+7]
-        holiday_count = sum(1 for day in week if day in holidays)
-        best_weeks.append((week[0], holiday_count))
-        
+        week_start = dates[i]
+        week_end = week_start + datetime.timedelta(days=7)
+        holiday_count = count_nearby_holidays(week_start, week_end, holidays)
+        best_weeks.append((week_start, holiday_count))
+
         # Checking 2-weeks
-        two_weeks = dates[i:i+14]
-        holiday_count = sum(1 for day in two_weeks if day in holidays)
-        best_two_weeks.append((two_weeks[0], holiday_count))
-        
+        two_weeks_start = dates[i]
+        two_weeks_end = two_weeks_start + datetime.timedelta(days=14)
+        holiday_count = count_nearby_holidays(two_weeks_start, two_weeks_end, holidays)
+        best_two_weeks.append((two_weeks_start, holiday_count))
+
     # Sorting by the amount of holidays
     best_weeks.sort(key=lambda x: x[1], reverse=True)
     best_two_weeks.sort(key=lambda x: x[1], reverse=True)
-    
+
     # Filtering by seasons & min gap
     seasons = {
         "winter": (datetime.date(2025, 1, 1), datetime.date(2025, 3, 20)),
@@ -83,10 +92,10 @@ def find_best_vacations(dates, holidays, min_gap=30):
                 end_date = start_date + datetime.timedelta(days=7)
             else:
                 end_date = start_date + datetime.timedelta(days=14)
-                
+
             # Checking a season
             season_found = False
-            for season, (season_start, season_end) in seasons.items():
+            for season_name, (season_start, season_end) in seasons.items():
                 if season_start <= start_date <= season_end:
                     season_found = True
                     break
