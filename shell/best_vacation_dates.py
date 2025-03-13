@@ -34,7 +34,7 @@ def get_holidays(calendar_type):
         }
     else:
         raise ValueError("Unknown calendar type")
-    
+
 def generate_dates(year):
     # Generates all dates in the year
     start_date = datetime.date(year, 1, 1)
@@ -76,25 +76,29 @@ def find_best_vacations(dates, holidays, min_gap=30):
     for i in range(len(dates)):
         # Checking a week
         week_start = dates[i]
+        if week_start.weekday() != 0:  # Vacation MUST start on Monday
+            continue
         week_end = week_start + datetime.timedelta(days=7)
         if is_long_holiday(week_start, week_end, long_holidays):
             continue  # skipping a period which is matching any long vacation
         holiday_count = count_nearby_holidays(week_start, week_end, holidays)
         best_weeks.append((week_start, holiday_count))
 
-        # Проверяем двухнедельный отрезок
+        # Checking 2-week
         two_weeks_start = dates[i]
+        if two_weeks_start.weekday() != 0:  # Vacation MUST start on Monday
+            continue
         two_weeks_end = two_weeks_start + datetime.timedelta(days=14)
         if is_long_holiday(two_weeks_start, two_weeks_end, long_holidays):
-            continue  # Пропускаем периоды, совпадающие с длительными праздниками
+            continue  # skipping a period which is matching any long vacation
         holiday_count = count_nearby_holidays(two_weeks_start, two_weeks_end, holidays)
         best_two_weeks.append((two_weeks_start, holiday_count))
 
-    # Сортируем по количеству праздников
+    # Sorting by the amount of holidays
     best_weeks.sort(key=lambda x: x[1], reverse=True)
     best_two_weeks.sort(key=lambda x: x[1], reverse=True)
 
-    # Фильтруем по сезонам и минимальному разрыву
+    # Filtering by seasons and min gap
     seasons = {
         "winter": (datetime.date(2025, 1, 1), datetime.date(2025, 3, 20)),
         "spring": (datetime.date(2025, 3, 21), datetime.date(2025, 6, 20)),
@@ -136,15 +140,21 @@ def find_best_vacations(dates, holidays, min_gap=30):
 def main():
     print("Choose your calendar type (Russian, American, European)...")
     calendar_type = input().strip().lower()
-    
+
+    print("\nHow many vacation options would you like to see? (default = 5):")
+    try:
+        num_options = int(input().strip())
+    except ValueError:
+        num_options = 5
+
     holidays = get_holidays(calendar_type)
     dates = generate_dates(2025)
-    
+
     selected_vacations = find_best_vacations(dates, holidays)
-    
-    print("\nBest dates:")
-    for start_date, end_date, holiday_count in selected_vacations:
-        print(f"Vacation from {start_date} until {end_date}.\nHolidays near: {holiday_count}\n\n")
-        
+
+    print("\nBest vacations:")
+    for i, (start_date, end_date, holiday_count) in enumerate(selected_vacations[:num_options]):
+        print(f"{i + 1}. Vacation from {start_date} until {end_date}. Holidays near: {holiday_count}")
+
 if __name__ == "__main__":
     main()
